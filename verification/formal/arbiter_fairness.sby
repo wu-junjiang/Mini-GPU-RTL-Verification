@@ -1,0 +1,44 @@
+; SymbiYosys config for formal-verifying arbiter_round_robin fairness
+; Week 8 goal: prove "no requester is starved indefinitely"
+;
+; Requires: pip install or apt install yosys + symbiyosys (sby)
+; Run with: sby -f arbiter_fairness.sby
+
+[tasks]
+bmc
+
+[options]
+bmc: mode bmc
+depth 32
+
+[engines]
+smtbmc boolector
+
+[script]
+read -formal ../../rtl/arbiter_round_robin.v
+read -formal arbiter_fairness_bind.sv
+prep -top arbiter_round_robin
+
+[files]
+../../rtl/arbiter_round_robin.v
+arbiter_fairness_bind.sv
+
+; -----------------------------------------------------------------------
+; TODO (Week 8): create arbiter_fairness_bind.sv containing a `bind`
+; statement with SVA properties, e.g.:
+;
+;   module arbiter_fairness_props #(parameter N=4) (
+;       input clk, input rst_n, input [N-1:0] req, input [N-1:0] grant
+;   );
+;     // at most one grant bit set at a time
+;     assert property (@(posedge clk) disable iff (!rst_n)
+;         $onehot0(grant));
+;
+;     // if req[0] held for N cycles, grant[0] must have asserted at least once
+;     // (fill in a concrete liveness/fairness property here)
+;   endmodule
+;
+;   bind arbiter_round_robin arbiter_fairness_props #(.N(4)) fairness_check (
+;       .clk(clk), .rst_n(rst_n), .req(req), .grant(grant)
+;   );
+; -----------------------------------------------------------------------
